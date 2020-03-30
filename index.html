@@ -1,0 +1,123 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <script>
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    var cachedData;
+
+    window.onload = function () {
+
+      function getNationalCovidData() {
+        if (cachedData) {
+          return new Promise((resolve) => {
+            resolve(cachedData);
+          })
+        }
+
+        return fetch('https://covidtracking.com/api/us/daily')
+          .then(response => response.json())
+          .then((data) => {
+            cachedData = data;
+            return data;
+          });
+      }
+
+      function formatData(dataPoints, name) {
+        return {
+          type: "line",
+          xValueFormatString: "########",
+          showInLegend: true,
+          name,
+          dataPoints,
+        };
+      }
+
+      function formatTime(obj) {
+        const timeString = obj.value.toString();
+
+        const year = timeString.substring(0, 4);
+        const month = parseInt(timeString.substring(4, 6));
+        const day = timeString.substring(6, 8);
+
+        return `${day} ${months[month]} ${year}`;
+      }
+
+      getNationalCovidData().then((covidData) => {
+        const positiveCases = [],
+          negativeCases = [],
+          pendingCases = [],
+          hospitalizedCases = [],
+          deaths = [];
+
+        covidData.forEach((datum) => {
+          positiveCases.push({ x: datum.date, y: datum.positive });
+          negativeCases.push({ x: datum.date, y: datum.negative });
+          pendingCases.push({ x: datum.date, y: datum.pending });
+          hospitalizedCases.push({ x: datum.date, y: datum.hospitalized });
+          deaths.push({ x: datum.date, y: datum.death });
+        });
+
+        const data = [
+          formatData(positiveCases, "Positive COVID-19 Cases"),
+          formatData(negativeCases, "Negative COVID-19 Cases"),
+          formatData(pendingCases, "Pending COVID-19 Cases"),
+          formatData(hospitalizedCases, "COVID-19 Hospitalizations"),
+          formatData(deaths, "COVID-19 Deaths"),
+        ]
+
+        const chart = new CanvasJS.Chart("chartContainer", {
+          animationEnabled: true,
+          zoomEnabled: true,
+          title: {
+            text: "USA COVID-19 Stats"
+          },
+          axisX: {
+            title: "Date",
+            valueFormatString: "####",
+            interval: 4,
+            labelFormatter: formatTime
+          },
+          axisY: {
+            logarithmic: false,
+            title: "COVID Cases",
+            titleFontColor: "#6D78AD",
+            lineColor: "#6D78AD",
+            gridThickness: 0,
+            lineThickness: 1,
+            includeZero: false,
+          },
+          legend: {
+            verticalAlign: "top",
+            fontSize: 16,
+            dockInsidePlotArea: true
+          },
+          data,
+        });
+        chart.render();
+
+      });
+
+    }
+  </script>
+</head>
+
+<body>
+  <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+  <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</body>
+
+</html>
