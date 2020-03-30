@@ -1,0 +1,12 @@
+.configuration-container {
+    display: flex;
+}
+
+.configuration-item {
+    flex: 1;
+}
+
+.selector {
+    width: 150px;
+    height: 200px;
+}

@@ -2,181 +2,8 @@
 <html>
 
 <head>
-  <script>
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-
-    var cachedData;
-
-    window.onload = function () {
-
-      const useLogarithmicRef = document.getElementById('use-logarithmic');
-      const displayPositiveRef = document.getElementById('display-positive');
-      const displayNegativeRef = document.getElementById('display-negative');
-      const displayPendingRef = document.getElementById('display-pending');
-      const displayHospitalizedRef = document.getElementById('display-hospitalized');
-      const displayDeathsRef = document.getElementById('display-deaths');
-
-      const settings = {
-        useLogarithmic: useLogarithmicRef.checked,
-        displayPositive: displayPositiveRef.checked,
-        displayNegative: displayNegativeRef.checked,
-        displayPending: displayPendingRef.checked,
-        displayHospitalized: displayHospitalizedRef.checked,
-        displayDeaths: displayDeathsRef.checked
-      };
-
-      useLogarithmicRef.addEventListener('click', (data) => {
-        settings.useLogarithmic = data.target.checked;
-        createChart();
-      });
-
-      displayPositiveRef.addEventListener('click', (data) => {
-        settings.displayPositive = data.target.checked;
-        createChart();
-      });
-
-      displayNegativeRef.addEventListener('click', (data) => {
-        settings.displayNegative = data.target.checked;
-        createChart();
-      });
-
-      displayPendingRef.addEventListener('click', (data) => {
-        settings.displayPending = data.target.checked;
-        createChart();
-      });
-
-      displayHospitalizedRef.addEventListener('click', (data) => {
-        settings.displayHospitalized = data.target.checked;
-        createChart();
-      });
-
-      displayDeathsRef.addEventListener('click', (data) => {
-        settings.displayDeaths = data.target.checked;
-        createChart();
-      });
-
-      function getNationalCovidData() {
-        if (cachedData) {
-          return new Promise((resolve) => {
-            resolve(cachedData);
-          })
-        }
-
-        return fetch('https://covidtracking.com/api/us/daily')
-          .then(response => response.json())
-          .then((data) => {
-            cachedData = data;
-            return data;
-          });
-      }
-
-      function formatData(dataPoints, name) {
-        return {
-          type: "line",
-          xValueFormatString: "########",
-          showInLegend: true,
-          name,
-          dataPoints,
-        };
-      }
-
-      function formatTime(obj) {
-        const timeString = obj.value.toString();
-
-        const year = timeString.substring(0, 4);
-        const month = parseInt(timeString.substring(4, 6));
-        const day = timeString.substring(6, 8);
-
-        return `${day} ${months[month]} ${year}`;
-      }
-
-      function createChart() {
-        getNationalCovidData().then((covidData) => {
-          const positiveCases = [],
-            negativeCases = [],
-            pendingCases = [],
-            hospitalizedCases = [],
-            deaths = [];
-
-          covidData.forEach((datum) => {
-            positiveCases.push({ x: datum.date, y: datum.positive });
-            negativeCases.push({ x: datum.date, y: datum.negative });
-            pendingCases.push({ x: datum.date, y: datum.pending });
-            hospitalizedCases.push({ x: datum.date, y: datum.hospitalized });
-            deaths.push({ x: datum.date, y: datum.death });
-          });
-
-          const data = [];
-
-          if (settings.displayPositive) {
-            data.push(formatData(positiveCases, "Positive COVID-19 Cases"));
-          }
-
-          if (settings.displayNegative) {
-            data.push(formatData(negativeCases, "Negative COVID-19 Cases"));
-          }
-
-          if (settings.displayPending) {
-            data.push(formatData(pendingCases, "Pending COVID-19 Cases"));
-          }
-
-          if (settings.displayHospitalized) {
-            data.push(formatData(hospitalizedCases, "COVID-19 Hospitalizations"));
-          }
-
-          if (settings.displayDeaths) {
-            data.push(formatData(deaths, "COVID-19 Deaths"));
-          }
-
-          const chart = new CanvasJS.Chart("chartContainer", {
-            animationEnabled: true,
-            zoomEnabled: true,
-            title: {
-              text: "USA COVID-19 Stats"
-            },
-            axisX: {
-              title: "Date",
-              valueFormatString: "####",
-              interval: 4,
-              labelFormatter: formatTime
-            },
-            axisY: {
-              logarithmic: settings.useLogarithmic,
-              title: "COVID Cases",
-              titleFontColor: "#6D78AD",
-              lineColor: "#6D78AD",
-              gridThickness: 0,
-              lineThickness: 1,
-              includeZero: false,
-            },
-            legend: {
-              verticalAlign: "top",
-              fontSize: 16,
-              dockInsidePlotArea: true
-            },
-            data,
-          });
-          chart.render();
-
-        });
-      }
-
-      createChart();
-
-    }
-  </script>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./index.js"></script>
 </head>
 
 <body>
@@ -185,35 +12,68 @@
 
   <hr />
 
-  <fieldset>
-    <div>
-      <input type="checkbox" id="use-logarithmic" value="use-logarithmic">
-      <label for="use-logarithmic">Use Logarithmic Scale</label>
-    </div>
-  </fieldset>
+  <div class="configuration-container">
+    <fieldset class="configuration-item">
+      <legend>Display Configuration</legend>
 
-  <fieldset>
-    <div>
-      <input type="checkbox" id="display-positive" value="display-positive" checked>
-      <label for="display-positive">Display Positive COVID cases</label>
+      <div>
+        <input type="checkbox" id="use-logarithmic" value="use-logarithmic">
+        <label for="use-logarithmic">Use Logarithmic Scale</label>
+      </div>
+
+      <div>
+        <input type="checkbox" id="use-animations" value="use-animations" checked>
+        <label for="use-animations">Use Animations</label>
+      </div>
+
+      <hr />
+
+      <div>
+        <input type="checkbox" id="display-positive" value="display-positive" checked>
+        <label for="display-positive">Display Positive COVID cases</label>
+      </div>
+
+      <div>
+        <input type="checkbox" id="display-negative" value="display-negative">
+        <label for="display-negative">Display Negative COVID cases</label>
+      </div>
+
+      <div>
+        <input type="checkbox" id="display-pending" value="display-pending" checked>
+        <label for="display-pending">Display Pending COVID cases</label>
+      </div>
+
+      <div>
+        <input type="checkbox" id="display-hospitalized" value="display-hospitalized" checked>
+        <label for="display-hospitalized">Display Hospitalized COVID cases</label>
+      </div>
+
+      <div>
+        <input type="checkbox" id="display-deaths" value="display-deaths" checked>
+        <label for="display-deaths">Display COVID related deaths</label>
+      </div>
+
+    </fieldset>
+
+    <div class="configuration-item">
+
+      <fieldset>
+        <legend>Select information to display</legend>
+        <input type="radio" id="use-national" name="data-kind" checked>
+        <label for="use-national">National</label>
+
+        <input type="radio" id="use-state" name="data-kind">
+        <label for="use-state">State</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Select states to display</legend>
+        <select name="states" class="selector" id="state-select" multiple disabled>
+        </select>
+      </fieldset>
+
     </div>
-    <div>
-      <input type="checkbox" id="display-negative" value="display-negative">
-      <label for="display-negative">Display Negative COVID cases</label>
-    </div>
-    <div>
-      <input type="checkbox" id="display-pending" value="display-pending" checked>
-      <label for="display-pending">Display Pending COVID cases</label>
-    </div>
-    <div>
-      <input type="checkbox" id="display-hospitalized" value="display-hospitalized" checked>
-      <label for="display-hospitalized">Display Hospitalized COVID cases</label>
-    </div>
-    <div>
-      <input type="checkbox" id="display-deaths" value="display-deaths" checked>
-      <label for="display-deaths">Display COVID related deaths</label>
-    </div>
-  </fieldset>
+  </div>
 </body>
 
 </html>
