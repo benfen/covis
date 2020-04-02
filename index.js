@@ -1,17 +1,3 @@
-const months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
 // https://gist.github.com/calebgrove/c285a9510948b633aa47
 const stateAbbreviations = {
   'AL': 'Alabama',
@@ -152,21 +138,20 @@ window.onload = function () {
   function formatData(dataPoints, name) {
     return {
       type: 'line',
-      xValueFormatString: '########',
       showInLegend: true,
       name,
       dataPoints,
     };
   }
 
-  function formatTime(obj) {
-    const timeString = obj.value.toString();
+  function convertToDate(timeStamp) {
+    const timeString = timeStamp.toString();
 
-    const year = timeString.substring(0, 4);
-    const month = parseInt(timeString.substring(4, 6));
-    const day = timeString.substring(6, 8);
+    const year = parseInt(timeString.substring(0, 4));
+    const month = parseInt(timeString.substring(4, 6)) - 1;
+    const day = parseInt(timeString.substring(6, 8));
 
-    return `${day} ${months[month]} ${year}`;
+    return new Date(year, month, day);
   }
 
   function renderChart(data) {
@@ -178,9 +163,8 @@ window.onload = function () {
       },
       axisX: {
         title: 'Date',
-        valueFormatString: '####',
-        interval: 4,
-        labelFormatter: formatTime
+        valueFormatString: 'DD MMM',
+        interval: 4
       },
       axisY: {
         logarithmic: useLogarithmicRef.checked,
@@ -214,33 +198,33 @@ window.onload = function () {
           deaths = [];
 
         nationalCovidData.forEach((datum) => {
-          positiveCases.push({ x: datum.date, y: datum.positive });
-          negativeCases.push({ x: datum.date, y: datum.negative });
-          pendingCases.push({ x: datum.date, y: datum.pending });
-          hospitalizedCases.push({ x: datum.date, y: datum.hospitalized });
-          deaths.push({ x: datum.date, y: datum.death });
+          positiveCases.push({ x: convertToDate(datum.date), y: datum.positive });
+          negativeCases.push({ x: convertToDate(datum.date), y: datum.negative });
+          pendingCases.push({ x: convertToDate(datum.date), y: datum.pending });
+          hospitalizedCases.push({ x: convertToDate(datum.date), y: datum.hospitalized });
+          deaths.push({ x: convertToDate(datum.date), y: datum.death });
         });
 
         const data = [];
 
         if (displayPositiveRef.checked) {
-          data.push(formatData(positiveCases, 'Positive COVID-19 Cases'));
+          data.push(formatData(positiveCases, 'US Positive'));
         }
 
         if (displayNegativeRef.checked) {
-          data.push(formatData(negativeCases, 'Negative COVID-19 Cases'));
+          data.push(formatData(negativeCases, 'US Negative'));
         }
 
         if (displayPendingRef.checked) {
-          data.push(formatData(pendingCases, 'Pending COVID-19 Cases'));
+          data.push(formatData(pendingCases, 'US Pending'));
         }
 
         if (displayHospitalizedRef.checked) {
-          data.push(formatData(hospitalizedCases, 'COVID-19 Hospitalizations'));
+          data.push(formatData(hospitalizedCases, 'US Hospitalizations'));
         }
 
         if (displayDeathsRef.checked) {
-          data.push(formatData(deaths, 'COVID-19 Deaths'));
+          data.push(formatData(deaths, 'US Deaths'));
         }
 
         return data;
@@ -303,19 +287,19 @@ window.onload = function () {
 
       if (parsedStateData[item.state]) {
         const state = parsedStateData[item.state];
-        state.positiveCases.push({ x: item.date, y: item.positive });
-        state.negativeCases.push({ x: item.date, y: item.negative });
-        state.pendingCases.push({ x: item.date, y: item.pending });
-        state.hospitalizedCases.push({ x: item.date, y: item.hospitalized });
-        state.deaths.push({ x: item.date, y: item.death });
+        state.positiveCases.push({ x: convertToDate(item.date), y: item.positive });
+        state.negativeCases.push({ x: convertToDate(item.date), y: item.negative });
+        state.pendingCases.push({ x: convertToDate(item.date), y: item.pending });
+        state.hospitalizedCases.push({ x: convertToDate(item.date), y: item.hospitalized });
+        state.deaths.push({ x: convertToDate(item.date), y: item.death });
 
       } else {
         parsedStateData[item.state] = {
-          positiveCases: [{ x: item.date, y: item.positive }],
-          negativeCases: [{ x: item.date, y: item.negative }],
-          pendingCases: [{ x: item.date, y: item.pending }],
-          hospitalizedCases: [{ x: item.date, y: item.hospitalized }],
-          deaths: [{ x: item.date, y: item.death }],
+          positiveCases: [{ x: convertToDate(item.date), y: item.positive }],
+          negativeCases: [{ x: convertToDate(item.date), y: item.negative }],
+          pendingCases: [{ x: convertToDate(item.date), y: item.pending }],
+          hospitalizedCases: [{ x: convertToDate(item.date), y: item.hospitalized }],
+          deaths: [{ x: convertToDate(item.date), y: item.death }],
         };
       }
     });
