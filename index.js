@@ -138,12 +138,12 @@ window.onload = function () {
   const stateSelectRef = document.getElementById('state-select');
 
   useNationalRef.addEventListener('click', () => {
-    stateSelectRef.disabled = useNationalRef.checked;
+    stateSelectRef.disabled = !useStateRef.checked;
     createChart();
   });
 
   useStateRef.addEventListener('click', () => {
-    stateSelectRef.disabled = useNationalRef.checked;
+    stateSelectRef.disabled = !useStateRef.checked;
     createChart();
   });
 
@@ -203,8 +203,10 @@ window.onload = function () {
   }
 
   function createChart() {
+    const promises = [];
+
     if (useNationalRef.checked) {
-      getNationalCovidData().then((nationalCovidData) => {
+      promises.push(getNationalCovidData().then((nationalCovidData) => {
         const positiveCases = [],
           negativeCases = [],
           pendingCases = [],
@@ -241,11 +243,13 @@ window.onload = function () {
           data.push(formatData(deaths, 'COVID-19 Deaths'));
         }
 
-        renderChart(data);
+        return data;
 
-      });
-    } else {
-      getStateCovidData().then(() => {
+      }));
+    }
+    
+    if (useStateRef.checked) {
+      promises.push(getStateCovidData().then(() => {
         const stateList = [];
         for (let i = 0; i < stateSelectRef.options.length; i++) {
           if (stateSelectRef.options[i].selected) {
@@ -278,9 +282,20 @@ window.onload = function () {
           }
         });
 
-        renderChart(data);
-      });
+        return data;
+
+      }));
+
     }
+
+    Promise.all(promises).then((values) => {
+      let data = [];
+      values.forEach((value) => {
+        data = data.concat(value);
+      });
+
+      renderChart(data);
+    })
   }
 
   getStateCovidData().then((stateData) => {
