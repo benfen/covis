@@ -99,7 +99,6 @@ function getStateCovidData() {
 window.onload = function () {
 
   const useLogarithmicRef = document.getElementById('use-logarithmic');
-  const useAnimationsRef = document.getElementById('use-animations');
   const displayPositiveRef = document.getElementById('display-positive');
   const displayNegativeRef = document.getElementById('display-negative');
   const displayPendingRef = document.getElementById('display-pending');
@@ -156,7 +155,7 @@ window.onload = function () {
 
   function renderChart(data) {
     const chart = new CanvasJS.Chart('chartContainer', {
-      animationEnabled: useAnimationsRef.checked,
+      animationEnabled: false,
       zoomEnabled: true,
       title: {
         text: 'USA COVID-19 Stats'
