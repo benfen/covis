@@ -64,7 +64,10 @@ const stateAbbreviations = {
 
 let cachedNationalData;
 let cachedStateData;
-const parsedStateData = {};
+const parsedStateData = {
+  daily: {},
+  total: {},
+};
 
 function getNationalCovidData() {
   if (cachedNationalData) {
@@ -99,6 +102,7 @@ function getStateCovidData() {
 window.onload = function () {
 
   const useLogarithmicRef = document.getElementById('use-logarithmic');
+  const useDeltaRef = document.getElementById('use-delta');
   const displayPositiveRef = document.getElementById('display-positive');
   const displayNegativeRef = document.getElementById('display-negative');
   const displayPendingRef = document.getElementById('display-pending');
@@ -106,6 +110,8 @@ window.onload = function () {
   const displayDeathsRef = document.getElementById('display-deaths');
 
   useLogarithmicRef.addEventListener('click', createChart);
+
+  useDeltaRef.addEventListener('click', createChart);
 
   displayPositiveRef.addEventListener('click', createChart);
 
@@ -154,6 +160,12 @@ window.onload = function () {
   }
 
   function renderChart(data) {
+    let title = 'COVID Cases';
+
+    if (useDeltaRef.checked) {
+      title = 'Daily COVID Cases';
+    }
+
     const chart = new CanvasJS.Chart('chartContainer', {
       animationEnabled: false,
       zoomEnabled: true,
@@ -167,7 +179,7 @@ window.onload = function () {
       },
       axisY: {
         logarithmic: useLogarithmicRef.checked,
-        title: 'COVID Cases',
+        title,
         titleFontColor: '#6D78AD',
         lineColor: '#6D78AD',
         gridThickness: 0,
@@ -196,12 +208,27 @@ window.onload = function () {
           hospitalizedCases = [],
           deaths = [];
 
-        nationalCovidData.forEach((datum) => {
-          positiveCases.push({ x: convertToDate(datum.date), y: datum.positive });
-          negativeCases.push({ x: convertToDate(datum.date), y: datum.negative });
-          pendingCases.push({ x: convertToDate(datum.date), y: datum.pending });
-          hospitalizedCases.push({ x: convertToDate(datum.date), y: datum.hospitalized });
-          deaths.push({ x: convertToDate(datum.date), y: datum.death });
+        nationalCovidData.forEach((data) => {
+          positiveCases.push({
+            x: convertToDate(data.date),
+            y: useDeltaRef.checked ? Math.max(data.positiveIncrease, 0) : data.positive,
+          });
+          negativeCases.push({
+            x: convertToDate(data.date),
+            y: useDeltaRef.checked ? Math.max(data.negativeIncrease, 0) : data.negative,
+          });
+          pendingCases.push({
+            x: convertToDate(data.date),
+            y: useDeltaRef.checked ? Math.max(data.pendingIncrease, 0) : data.pending,
+          });
+          hospitalizedCases.push({
+            x: convertToDate(data.date),
+            y: useDeltaRef.checked ? Math.max(data.hospitalizedIncrease, 0) : data.hospitalized,
+          });
+          deaths.push({
+            x: convertToDate(data.date),
+            y: useDeltaRef.checked ? Math.max(data.deathIncrease, 0) : data.death,
+          });
         });
 
         const data = [];
@@ -230,7 +257,7 @@ window.onload = function () {
 
       }));
     }
-    
+
     if (useStateRef.checked) {
       promises.push(getStateCovidData().then(() => {
         const stateList = [];
@@ -241,25 +268,30 @@ window.onload = function () {
         }
 
         const data = [];
+        let stateRef = parsedStateData.total;
+
+        if (useDeltaRef.checked) {
+          stateRef = parsedStateData.daily;
+        }
 
         stateList.forEach((state) => {
-          const datum = parsedStateData[state];
+          const datum = stateRef[state];
           if (displayPositiveRef.checked) {
             data.push(formatData(datum.positiveCases, `${state} Positive`));
           }
-  
+
           if (displayNegativeRef.checked) {
             data.push(formatData(datum.negativeCases, `${state} Negative`));
           }
-  
+
           if (displayPendingRef.checked) {
             data.push(formatData(datum.pendingCases, `${state} Pending`));
           }
-  
+
           if (displayHospitalizedRef.checked) {
             data.push(formatData(datum.hospitalizedCases, `${state} Hospitalizations`));
           }
-  
+
           if (displayDeathsRef.checked) {
             data.push(formatData(datum.deaths, `${state} Deaths`));
           }
@@ -282,28 +314,42 @@ window.onload = function () {
   }
 
   getStateCovidData().then((stateData) => {
+
     stateData.forEach((item) => {
+      if (parsedStateData.total[item.state]) {
+        const totalState = parsedStateData.total[item.state];
+        totalState.positiveCases.push({ x: convertToDate(item.date), y: item.positive });
+        totalState.negativeCases.push({ x: convertToDate(item.date), y: item.negative });
+        totalState.pendingCases.push({ x: convertToDate(item.date), y: item.pending });
+        totalState.hospitalizedCases.push({ x: convertToDate(item.date), y: item.hospitalized });
+        totalState.deaths.push({ x: convertToDate(item.date), y: item.death });
 
-      if (parsedStateData[item.state]) {
-        const state = parsedStateData[item.state];
-        state.positiveCases.push({ x: convertToDate(item.date), y: item.positive });
-        state.negativeCases.push({ x: convertToDate(item.date), y: item.negative });
-        state.pendingCases.push({ x: convertToDate(item.date), y: item.pending });
-        state.hospitalizedCases.push({ x: convertToDate(item.date), y: item.hospitalized });
-        state.deaths.push({ x: convertToDate(item.date), y: item.death });
-
+        const dailyState = parsedStateData.daily[item.state];
+        dailyState.positiveCases.push({ x: convertToDate(item.date), y: Math.max(item.positiveIncrease, 0) });
+        dailyState.negativeCases.push({ x: convertToDate(item.date), y: Math.max(item.negativeIncrease, 0) });
+        dailyState.pendingCases.push({ x: convertToDate(item.date), y: Math.max(item.pendingIncrease, 0) });
+        dailyState.hospitalizedCases.push({ x: convertToDate(item.date), y: Math.max(item.hospitalizedIncrease, 0) });
+        dailyState.deaths.push({ x: convertToDate(item.date), y: Math.max(item.deathIncrease, 0) });
       } else {
-        parsedStateData[item.state] = {
+        parsedStateData.total[item.state] = {
           positiveCases: [{ x: convertToDate(item.date), y: item.positive }],
           negativeCases: [{ x: convertToDate(item.date), y: item.negative }],
           pendingCases: [{ x: convertToDate(item.date), y: item.pending }],
           hospitalizedCases: [{ x: convertToDate(item.date), y: item.hospitalized }],
           deaths: [{ x: convertToDate(item.date), y: item.death }],
         };
+
+        parsedStateData.daily[item.state] = {
+          positiveCases: [{ x: convertToDate(item.date), y: Math.max(item.positiveIncrease, 0) }],
+          negativeCases: [{ x: convertToDate(item.date), y: Math.max(item.negativeIncreas, 0) }],
+          pendingCases: [{ x: convertToDate(item.date), y: Math.max(item.pendingIncrease, 0) }],
+          hospitalizedCases: [{ x: convertToDate(item.date), y: Math.max(item.hospitalizedIncrease, 0) }],
+          deaths: [{ x: convertToDate(item.date), y: Math.max(item.deathIncrease, 0) }],
+        };
       }
     });
 
-    Object.keys(parsedStateData).sort().forEach((stateName) => {
+    Object.keys(parsedStateData.total).sort().forEach((stateName) => {
       const newOption = document.createElement('option');
       newOption.value = stateName;
       if (stateAbbreviations[stateName]) {
